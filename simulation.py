@@ -3,6 +3,8 @@ import numpy as np
 NUM_PLANES = 1
 GRAVITY = 5.
 ENGINE_ACCEL = 3.
+LIFT_COEFF = 0.1
+DRAG_COEFF = 0.1
 
 class Simulation:
 	def __init__(self):
@@ -12,3 +14,4 @@ class Simulation:
 	def update(self, timedelta=1/60):
 		self.positions += self.speeds * timedelta
 		self.speeds += np.array((ENGINE_ACCEL, GRAVITY)) * timedelta
+		self.speeds -= np.array((DRAG_COEFF, LIFT_COEFF)) * timedelta * self.speeds ** 2
