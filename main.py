@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import pygame
 
 from simulation import Simulation
@@ -20,8 +21,11 @@ def timedelta() -> float:
 	return startTime - prev
 
 def draw(simulation: Simulation):
-	for planePos in simulation.positions:
-		display.blit(PLANE_IMG, planePos)
+	for pos, angle in zip(simulation.positions, simulation.angles * 180 / np.pi):
+		img = pygame.transform.rotate(PLANE_IMG, angle)
+		rect = img.get_rect()
+		rect.center = pos
+		display.blit(img, rect)
 
 def mainLoop():
 	simulation = Simulation()
@@ -31,11 +35,14 @@ def mainLoop():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
-
-		simulation.update(timedelta())
+			elif event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_r:
+					simulation = Simulation()
 
 		display.fill((0, 0, 0))
-		draw(simulation)	
+		draw(simulation)
+		simulation.update(timedelta())
+
 		pygame.display.update()
 		pygame.time.Clock().tick(FPS)
 	
