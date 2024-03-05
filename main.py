@@ -41,7 +41,8 @@ def mainLoop():
 
 		display.fill((0, 0, 0))
 		draw(simulation)
-		simulation.update(timedelta())
+		controlInputs = pygame.mouse.get_pos()[0] / SCREEN_WIDTH, 1 - pygame.mouse.get_pos()[1] / SCREEN_HEIGHT
+		simulation.update(timedelta(), controlInputs)
 
 		pygame.display.update()
 		pygame.time.Clock().tick(FPS)

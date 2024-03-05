@@ -15,17 +15,18 @@ class Simulation:
 		self.angles = np.zeros(NUM_PLANES)
 		self.angularVels = np.zeros(NUM_PLANES)
 
-	def update(self, timedelta=1/60):
+	def update(self, timedelta, controlInputs):
 		self.positions += self.speeds * timedelta
 		self.speeds[:, 1] += GRAVITY * timedelta
-		self.speeds += self.rotate((ENGINE_ACCEL, 0)) * timedelta
+		self.speeds += timedelta * (enginePower := self.rotate((ENGINE_ACCEL, 0)) * controlInputs[0])
 
-		lift = timedelta * self.airflowSpeed() ** 2
-		self.speeds += self.rotate((0, -LIFT_COEFF)) * lift[:, np.newaxis]
-		self.speeds -= DRAG_COEFF * timedelta * self.speeds * np.linalg.norm(self.speeds, axis=1)
+		self.speeds += timedelta * (liftVec := self.rotate((0, -LIFT_COEFF)) * self.airflowSpeed()[:, np.newaxis] ** 2)
+		self.speeds -= timedelta * (dragVec := DRAG_COEFF * self.speeds * np.linalg.norm(self.speeds, axis=1))
+
+		self.angularVels -= ELEVATOR_LEVER_COEFF * timedelta * np.sin(controlInputs[1] * ELEVATOR_MAX_ANGLE * 2 - ELEVATOR_MAX_ANGLE)
 
 		self.angles += self.angularVels * timedelta
-		self.angularVels -= LIFT_LEVER_COEFF * lift
+		self.angularVels -= timedelta * LIFT_LEVER_COEFF * self.airflowSpeed() ** 2
 		self.angularVels -= ANGULAR_DRAG_COEFF * timedelta * self.angularVels * np.abs(self.angularVels)
 	def airflowSpeed(self):
 		'''speed of airflow around wings'''
