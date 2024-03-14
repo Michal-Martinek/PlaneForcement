@@ -1,7 +1,6 @@
 import numpy as np
 import pygame
 
-NUM_PLANES = 1
 GRAVITY = 5.
 ENGINE_ACCEL = 3.
 LIFT_COEFF = 0.2
@@ -12,21 +11,28 @@ ELEVATOR_MAX_ANGLE = 0.4 # ~ 23 degrees
 ELEVATOR_LEVER_COEFF = 0.2
 
 class Simulation:
-	def __init__(self):
-		self.positions = np.repeat(np.array((100., 300.))[np.newaxis], NUM_PLANES, 0)
-		self.speeds = np.zeros((NUM_PLANES, 2))
-		self.angles = np.zeros(NUM_PLANES)
-		self.angularVels = np.zeros(NUM_PLANES)
+	def __init__(self, numPlanes):
+		self.positions = np.repeat(np.array((100., 300.))[np.newaxis], numPlanes, 0)
+		self.speeds = np.zeros((numPlanes, 2))
+		self.angles = np.zeros(numPlanes)
+		self.angularVels = np.zeros(numPlanes)
+	def flatten(self, arr):
+		if len(arr.shape) == 1: return arr[..., np.newaxis]
+		arr.reshape((arr.shape[0], -1))
+		return arr
+	def state(self):
+		vars = [self.flatten(a) for a in (self.positions, self.speeds, self.angles, self.angularVels)]
+		return np.concatenate(vars, axis=1)
 
 	def update(self, timedelta, controlInputs, *, drawVectors=True):
 		self.positions += self.speeds * timedelta
 		self.speeds[:, 1] += GRAVITY * timedelta
-		self.speeds += timedelta * (enginePower := self.rotate((ENGINE_ACCEL, 0)) * controlInputs[0])
+		self.speeds += timedelta * (enginePower := self.rotate((ENGINE_ACCEL, 0)) * controlInputs[:, :1])
 
 		self.speeds += timedelta * (liftVec := self.rotate((0, -LIFT_COEFF)) * self.airflowSpeed()[:, np.newaxis] ** 2)
-		self.speeds -= timedelta * (dragVec := DRAG_COEFF * self.speeds * np.linalg.norm(self.speeds, axis=1))
+		self.speeds -= timedelta * (dragVec := DRAG_COEFF * self.speeds * np.linalg.norm(self.speeds, axis=1, keepdims=True))
 
-		self.angularVels -= ELEVATOR_LEVER_COEFF * timedelta * np.sin(controlInputs[1] * ELEVATOR_MAX_ANGLE * 2 - ELEVATOR_MAX_ANGLE)
+		self.angularVels -= ELEVATOR_LEVER_COEFF * timedelta * np.sin(controlInputs[:, 1] * ELEVATOR_MAX_ANGLE * 2 - ELEVATOR_MAX_ANGLE)
 
 		self.angles += self.angularVels * timedelta
 		self.angularVels -= timedelta * LIFT_LEVER_COEFF * self.airflowSpeed() ** 2
@@ -44,7 +50,7 @@ class Simulation:
 		coords = self.rotate((1, 0)) * self.speeds
 		return np.sum(coords, -1)
 	def rotate(self, vecs) -> np.ndarray:
-		if isinstance(vecs, tuple): vecs = np.repeat(np.array((vecs,)), NUM_PLANES, 0)
+		if isinstance(vecs, tuple): vecs = np.repeat(np.array((vecs,)), self.angles.shape[0], 0)
 		rotMat = np.moveaxis(np.array( ((np.cos(self.angles), np.sin(self.angles)), (-np.sin(self.angles), np.cos(self.angles))) ), -1, 0)
 		product = rotMat * vecs[:, np.newaxis]
 		return np.sum(product, -1)
