@@ -12,6 +12,8 @@ ELEVATOR_LEVER_COEFF = 0.2
 
 class Simulation:
 	def __init__(self, numPlanes):
+		self.reset(numPlanes)
+	def reset(self, numPlanes):
 		self.positions = np.repeat(np.array((100., 300.))[np.newaxis], numPlanes, 0)
 		self.speeds = np.zeros((numPlanes, 2))
 		self.angles = np.zeros(numPlanes)
