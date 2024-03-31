@@ -22,7 +22,7 @@ class Simulation:
 		arr.reshape((arr.shape[0], -1))
 		return arr
 	def state(self):
-		vars = [self.flatten(a) for a in (self.positions, self.speeds, self.angles, self.angularVels)]
+		vars = [self.flatten(a) for a in (self.positions / 100, self.speeds, self.angles, self.angularVels)]
 		return np.concatenate(vars, axis=1)
 
 	def update(self, timedelta, controlInputs) -> list:

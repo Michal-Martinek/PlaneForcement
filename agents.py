@@ -3,18 +3,20 @@ import numpy as np
 MODEL_SHAPE = [6, 2]
 
 WINNER_RATIO = 2
-EVOLUTION_RATE = 1/50
+EVOLUTION_RATE = 1/20
+EVOLUTION_CHANCE = 1/4
 
 # TOOD # functions ----------------------
 def initialization(*shape):
-	return np.random.normal(size=shape) / 100
+	return np.random.normal(size=shape)
 def sigmoidActivation(z):
 	return np.exp(-np.logaddexp(0, -z))
 
 def straightLineFitness(state):
-	return state[:, 0] - 3 * np.abs(250 - state[:, 1])
+	return state[:, 0] - 3 * np.abs(2.5 - state[:, 1])
 def modification(shape):
 	a = initialization(*shape) * EVOLUTION_RATE
+	a = a * (np.random.uniform(size=shape) < EVOLUTION_CHANCE)
 	return a
 
 class Agents:
@@ -36,6 +38,7 @@ class Agents:
 
 	def evolveField(self, field, keys):
 		chosen = field[keys]
+		nextGen = np.concatenate((chosen + modification(chosen.shape), chosen))
 		assert nextGen.shape == field.shape
 		return nextGen
 	def evolve(self):

@@ -8,6 +8,7 @@ from agents import Agents
 
 # switches -------------------------
 USER_INPUT = False
+RENDER_SIMULATION = True
 
 # globals --------------------------
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
@@ -17,7 +18,7 @@ display = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 PLANE_IMG = pygame.image.load('Assets/bluePlane.png').convert()
 PLANE_IMG.set_colorkey((255, 255, 255))
 
-NUM_PLANES = 50
+NUM_PLANES = 300
 
 # helpers --------------------------
 def loadAgents(filename='models/agents.bin') -> Agents:
@@ -75,17 +76,21 @@ def getControlInputs():
 def testGeneration(duration):
 	simStep = 0
 	while simStep < duration:
-		simStep += (delta := timedelta())
+		simStep += (delta := timedelta() if RENDER_SIMULATION else 1/FPS)
 		forceLines = simulation.update(delta, getControlInputs())
-		draw()
-		for l in forceLines: pygame.draw.line(display, *l)
-		updateUI()
+		if RENDER_SIMULATION:
+			draw()
+			for l in forceLines: pygame.draw.line(display, *l)
+			updateUI()
 
 def mainLoop():
 	running = True
+	duration = 60
 	while running:
-		testGeneration(20)
+		testGeneration(duration)
 		saveAgents(agents)
+		draw()
+		updateUI()
 		agents.evolve()
 		simulation.reset(NUM_PLANES)
 
