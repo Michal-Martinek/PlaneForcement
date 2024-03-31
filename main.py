@@ -20,7 +20,7 @@ PLANE_IMG.set_colorkey((255, 255, 255))
 NUM_PLANES = 50
 
 # helpers --------------------------
-def loadAgents(filename='agents.bin') -> Agents:
+def loadAgents(filename='models/agents.bin') -> Agents:
 	try:
 		with open(filename, 'rb') as f:
 			agents = pickle.load(f)
@@ -28,7 +28,7 @@ def loadAgents(filename='agents.bin') -> Agents:
 			return agents
 	except (FileNotFoundError, pickle.PickleError): pass
 	return Agents(NUM_PLANES)
-def saveAgents(agents, filename='agents.bin'):
+def saveAgents(agents, filename='models/agents.bin'):
 	with open(filename, 'wb') as f:
 		pickle.dump(agents, f)
 
@@ -50,7 +50,9 @@ def drawPlanes():
 		rect = img.get_rect()
 		rect.center = pos
 		display.blit(img, rect)
-
+def draw():
+	display.fill((0, 0, 0))
+	drawPlanes()
 def updateUI():
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
@@ -59,8 +61,8 @@ def updateUI():
 		elif event.type == pygame.KEYDOWN:
 			if event.key == pygame.K_r:
 				simulation.reset(NUM_PLANES)
-	drawPlanes()
 	pygame.display.update()
+	pygame.time.Clock().tick(FPS)
 
 def getControlInputs():
 	controlInputs = agents.forward(simulation.state())
@@ -71,12 +73,13 @@ def getControlInputs():
 	return controlInputs
 
 def testGeneration(duration):
-	startTime = time.time()
-	while time.time() - startTime < duration:
-		display.fill((0, 0, 0))
-		simulation.update(timedelta(), getControlInputs())
+	simStep = 0
+	while simStep < duration:
+		simStep += (delta := timedelta())
+		forceLines = simulation.update(delta, getControlInputs())
+		draw()
+		for l in forceLines: pygame.draw.line(display, *l)
 		updateUI()
-		pygame.time.Clock().tick(FPS)
 
 def mainLoop():
 	running = True

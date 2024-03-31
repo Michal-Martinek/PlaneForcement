@@ -1,5 +1,4 @@
 import numpy as np
-import pygame
 
 GRAVITY = 5.
 ENGINE_ACCEL = 3.
@@ -26,7 +25,8 @@ class Simulation:
 		vars = [self.flatten(a) for a in (self.positions, self.speeds, self.angles, self.angularVels)]
 		return np.concatenate(vars, axis=1)
 
-	def update(self, timedelta, controlInputs, *, drawVectors=True):
+	def update(self, timedelta, controlInputs) -> list:
+		assert controlInputs.shape == self.positions.shape, 'controlInputs shape mismatch'
 		self.positions += self.speeds * timedelta
 		self.speeds[:, 1] += GRAVITY * timedelta
 		self.speeds += timedelta * (enginePower := self.rotate((ENGINE_ACCEL, 0)) * controlInputs[:, :1])
@@ -40,12 +40,13 @@ class Simulation:
 		self.angularVels -= timedelta * LIFT_LEVER_COEFF * self.airflowSpeed() ** 2
 		self.angularVels -= ANGULAR_DRAG_COEFF * timedelta * self.angularVels * np.abs(self.angularVels)
 
-		if drawVectors:
-			self.drawVec(6 * self.speeds)
-			self.drawVec(15 * enginePower, (0, 255, 0))
-			self.drawVec(6 * self.rotate((self.airflowSpeed()[0], 0)), (255, 255, 255))
-			self.drawVec(15 * liftVec, (0, 255, 255))
-			self.drawVec(-6 * dragVec, (0, 0, 255))
+		return [
+			self.getLine(6 * self.speeds),
+			self.getLine(15 * enginePower, (0, 255, 0)),
+			self.getLine(6 * self.rotate((self.airflowSpeed()[0], 0)), (255, 255, 255)),
+			self.getLine(15 * liftVec, (0, 255, 255)),
+			self.getLine(-6 * dragVec, (0, 0, 255))
+		]
 
 	def airflowSpeed(self):
 		'''speed of airflow around wings'''
@@ -57,7 +58,6 @@ class Simulation:
 		product = rotMat * vecs[:, np.newaxis]
 		return np.sum(product, -1)
 
-	def drawVec(self, vec, color=(255, 0, 0)):
-		while len(vec.shape) > 1: vec = vec[0]
-		line = self.positions[0], (self.positions[0] + vec)
-		pygame.draw.line(pygame.display.get_surface(), color, *line)
+	def getLine(self, vec, color=(255, 0, 0)):
+		while len(vec.shape) > 1: vec = vec[-1]
+		return color, self.positions[-1], self.positions[-1] + vec
