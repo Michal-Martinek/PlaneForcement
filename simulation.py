@@ -9,11 +9,14 @@ ANGULAR_DRAG_COEFF = 0.03
 ELEVATOR_MAX_ANGLE = 0.4 # ~ 23 degrees
 ELEVATOR_LEVER_COEFF = 0.2
 
+# TODO add angle of attack
+
 class Simulation:
 	def __init__(self, numPlanes):
 		self.reset(numPlanes)
 	def reset(self, numPlanes):
-		self.positions = np.repeat(np.array((100., 300.))[np.newaxis], numPlanes, 0)
+		heights = np.random.normal(300, 20, numPlanes)
+		self.positions = np.array((np.repeat(100, numPlanes), heights)).T
 		self.speeds = np.zeros((numPlanes, 2))
 		self.angles = np.zeros(numPlanes)
 		self.angularVels = np.zeros(numPlanes)

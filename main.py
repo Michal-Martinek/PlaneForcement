@@ -25,9 +25,11 @@ def loadAgents(filename='models/agents.bin') -> Agents:
 	try:
 		with open(filename, 'rb') as f:
 			agents = pickle.load(f)
-			agents.resetScore() # TODO check sizes
+			agents.resetScore()
+			assert agents.weights[0].shape[0] == NUM_PLANES
 			return agents
 	except (FileNotFoundError, pickle.PickleError): pass
+	except AssertionError as e: print(str(e))
 	return Agents(NUM_PLANES)
 def saveAgents(agents, filename='models/agents.bin'):
 	with open(filename, 'wb') as f:
@@ -47,12 +49,18 @@ def timedelta() -> float:
 
 def drawPlanes():
 	for pos, angle in zip(simulation.positions, simulation.angles * 180 / np.pi):
+		if np.abs(pos).sum() > 3 * SCREEN_WIDTH: continue
 		img = pygame.transform.rotate(PLANE_IMG, angle)
 		rect = img.get_rect()
 		rect.center = pos
 		display.blit(img, rect)
+def drawSawtoothLine():
+	for i in range(4):
+		pygame.draw.line(display, (255, 0, 0), (400*i, 350), (200 + 400*i, 300))
+		pygame.draw.line(display, (255, 0, 0), (200 + 400*i, 300), (400 + 400*i, 350))
 def draw():
 	display.fill((0, 0, 0))
+	drawSawtoothLine()
 	drawPlanes()
 def updateUI():
 	for event in pygame.event.get():
